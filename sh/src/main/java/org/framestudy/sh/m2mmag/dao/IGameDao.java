@@ -6,5 +6,5 @@ public interface IGameDao {
 	
 	public void saveGame(GameBean game);
 	
-	public GameBean getGameBeanById(Long id);
+	public GameBean getGameBeanById(Long sid);
 }
