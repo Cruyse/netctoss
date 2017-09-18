@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:cache="http://www.springframework.org/schema/cache"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/cache 
+        http://www.springframework.org/schema/cache/spring-cache.xsd">
+  
+  	<!--第一步开启自动扫描  -->
+  	<context:component-scan base-package="org.framestudy"></context:component-scan>
+  	<context:property-placeholder location="classpath:mysql.properties" ignore-resource-not-found="true" ignore-unresolvable="true"/>
+  	
+  	
+  	<!-- spring整合ehCache,非必配置项，可以省略 -->
+  	<cache:annotation-driven cache-manager="ehCacheCacheManager"/> 
+  	<bean id="ehCacheCacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">
+  		<property name="cacheManager" ref="ehCacheFactoryBean"></property>
+  	</bean>
+  	<bean id="ehCacheFactoryBean" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+  		<property name="configLocation" value="classpath:ehcache.xml"></property>
+  	</bean>
+  	<!-- 以上缓存代码，可以忽略 -->
+  	
+  	<!-- 第二步配置数据源 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+    	<property name="driverClass" value="${mysql.driverClassName}"/>
+    	<property name="jdbcUrl" value="${mysql.url}"></property>
+    	<property name="user" value="${mysql.username}"></property>
+    	<property name="password" value="${mysql.password}"></property>
+    	
+    	<!-- 初始化池中连接数 -->
+    	<property name="initialPoolSize" value="15"></property>
+    	<property name="minPoolSize" value="1"></property>
+    	<property name="maxPoolSize" value="50"></property><!-- 连接池能拥有的最大连接量：池内+池外 -->
+    	<property name="maxIdleTime" value="60"></property><!-- 最大空闲时间 -->
+    	<property name="acquireIncrement" value="5"></property>
+    	<property name="maxStatements" value="200"></property><!-- 池中放置的最大预编译量 -->
+    	<property name="idleConnectionTestPeriod" value="30"></property><!-- 多次时间检查1次池外的空闲连接 -->
+    	<property name="acquireRetryDelay" value="5"></property><!-- 当连接池中与数据库连接发生异常时，需要重新连接的次数 -->
+    	<property name="preferredTestQuery" value="select now() from dual"></property><!-- 在于数据库取得连接之前，发送1条验证语句，用于确认连接可建立 -->
+    </bean>
+     
+    <!-- 第三步配置SessionFactory --> 
+     <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+     	<property name="dataSource" ref="dataSource"></property>
+     	<property name="hibernateProperties">
+     		<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>     		
+     			<prop key="hibernate.show_sql">true</prop>
+     			<prop key="hibernate.format_sql">true</prop>
+     		</props>
+     	</property>
+     	<!-- 配置自动扫描使用了JPA规范的JavaBean -->
+     	<property name="packagesToScan">
+     		<list>
+     			<value>org.framestudy.sh.beans</value>
+     			<!-- <value>org.framestudy.sh.beans</value> -->
+     		</list>
+     	</property>
+     
+     	<!-- 配置自动扫描使用xml来完成ORM映射的目录位置
+     	<property name="mappingDirectoryLocations">
+     		<list>
+     			<value>org/framestudy/sh/xmls</value>
+     		</list>
+     	</property>
+      -->
+     </bean>
+     
+     <!-- 第四步直接配置事务管理器 -->
+     <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+     	<property name="sessionFactory" ref="sessionFactory"></property>	
+     </bean>
+     
+     <!-- 第五步采用spring容器提供的2种事务管理手段来管理事务 
+     <tx:annotation-driven transaction-manager="transactionManager"/>-->
+     
+     <!-- 声明式事务处理方式 -->
+      <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*" read-only="true"/>
+            <tx:method name="save*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            <tx:method name="add*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            <tx:method name="insert*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            <tx:method name="create*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            
+            <tx:method name="update*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            <tx:method name="change*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            <tx:method name="modify*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+
+            <tx:method name="delete*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            <tx:method name="remove*" read-only="false" isolation="DEFAULT" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+            
+            <tx:method name="find*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="get*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="query*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="select*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="count*" read-only="true" propagation="SUPPORTS"/>
+        </tx:attributes>
+    </tx:advice>
+     
+    <aop:config>
+        <aop:pointcut id="fooServiceOperation" expression="execution(* org.framestudy.sh.*mag.service.impl.*ServiceImpl.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="fooServiceOperation"/>
+    </aop:config>
+        
+   	<aop:aspectj-autoproxy/>     
+</beans>        

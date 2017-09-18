@@ -1,0 +1,31 @@
+<ehcache>
+
+	<!-- 缓存数据放置的位置：java.io.tmpdir放在内存的临时目录中，可以改成d:/cache -->
+    <diskStore path="java.io.tmpdir"/>
+    
+    <defaultCache
+        maxElementsInMemory="10000"
+        eternal="false"
+        timeToIdleSeconds="120"
+        timeToLiveSeconds="120"
+        overflowToDisk="true"
+        memoryStoreEvictionPolicy="LFU"
+        />
+        
+        <!-- maxElementsInMemory="10000" 缓存中的最大容量 -->
+        <!--  eternal="false" 是否永久持久数据 -->
+        <!--  timeToIdleSeconds="120" 缓存对象的空闲时间，单位是秒 -->
+        <!-- timeToLiveSeconds="120" 缓存对象的钝化时间，单位是秒 -->
+        <!-- overflowToDisk="true" 当内存空间不足时，是否要将数据写入到磁盘中 -->
+        <!-- memoryStoreEvictionPolicy="LRU" 缓存清理策略，LRU 最近最少使用，FIFO 先进先出，LFU 最少使用 -->
+        
+       <cache
+       	name="users"
+        maxElementsInMemory="10000"
+        eternal="false"
+        timeToIdleSeconds="120"
+        timeToLiveSeconds="120"
+        overflowToDisk="true"
+        memoryStoreEvictionPolicy="LFU"
+        /> 
+</ehcache>
